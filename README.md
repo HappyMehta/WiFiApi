@@ -3,7 +3,7 @@
     This library is made for esp32.
 
 # Dependencies for ESP32
-    AsyncTCP.h
-    ESPAsyncWebServer.h
+    AsyncTCP.h  Download https://github.com/me-no-dev/AsyncTCP/archive/master.zip
+    ESPAsyncWebServer.h Download https://github.com/me-no-dev/ESPAsyncWebServer/archive/master.zip
     ArduinoJSON.h Download https://github.com/KalharPandya/ArduinoJSON
     
