@@ -25,7 +25,7 @@ void setup() {
   myObj.addUnit("CPI", 9.15);
 
   //set host by connecting with API of server
-  //parameter_1 - API name of server(local_IP of server)
+  //parameter_1 - Ip address of server(local_IP of server)
   //parameter_2 - Server Api's name where you want to sent message  eg. if Link is "http://192.168.1.115/get" then "get" is Api's name 
   sv1.setHost("192.168.1.115","get");
  
