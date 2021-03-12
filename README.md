@@ -5,4 +5,5 @@
 # Dependencies for ESP32
     AsyncTCP.h
     ESPAsyncWebServer.h
-    ArduinoJSON.h Download [a link](https://github.com/KalharPandya/ArduinoJSON/blob/main/README.md)
+    ArduinoJSON.h Download https://github.com/KalharPandya/ArduinoJSON
+    
