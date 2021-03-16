@@ -1,5 +1,10 @@
 #include <WiFiApi.h>
 
+String hostName = "ESP2";
+String ssid="your WiFi Name";
+String password="your password";
+
+
 //function that recieves data
 json handleCall(json data){
   //Getting Elements from JSON(i.e data)
@@ -14,19 +19,11 @@ json handleCall(json data){
   return data;
 }
 
-
-String ssid="your WiFi Name";
-String password="your password";
-
-IPAddress local_IP(192, 168, 1, 115);//Mention IPAddress you want as WiFi's localIP Address 
-IPAddress gateway(192, 168, 1, 1);//Mention gatewayAddress accordding to local_IP & Router
-
-
 void setup() {
   Serial.begin(115200);
   
   //establish connection with Wifi
-  Connect(ssid,password,local_IP,gateway);
+  Connect(ssid,password,hostName);
 
   //gives local IP Address of network
   Serial.println(getAddress());

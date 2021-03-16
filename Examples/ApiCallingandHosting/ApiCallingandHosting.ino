@@ -1,5 +1,19 @@
 #include <WiFiApi.h>
 
+
+
+
+String ssid="your WiFi Name";
+String password="your password";
+String hostName = "ESP";
+
+IPAddress local_IP(192, 168, 1, 115);//Mention IPAddress you want as WiFi's localIP Address 
+IPAddress gateway(192, 168, 1, 1);//Mention gatewayAddress accordding to local_IP & Router
+
+
+ServerReference sv1;
+json myObj;
+
 //function that recieves data
 json handleCall(json data){
   //Getting Elements from JSON(i.e data)
@@ -13,17 +27,6 @@ json handleCall(json data){
   delay(20);
   return data;
 }
-
-
-String ssid="your WiFi Name";
-String password="your password";
-
-IPAddress local_IP(192, 168, 1, 115);//Mention IPAddress you want as WiFi's localIP Address 
-IPAddress gateway(192, 168, 1, 1);//Mention gatewayAddress accordding to local_IP & Router
-
-
-ServerReference sv1;
-json myObj;
 
 void setup() {
   Serial.begin(115200);
@@ -50,7 +53,7 @@ void setup() {
   //set host by connecting with API of server
   //parameter_1 - API name of server(local_IP of server)
   //parameter_2 - Server Api's name where you want to sent message  eg. if Link is "http://192.168.1.115/get" then "get" is Api's name 
-  sv1.setHost("192.168.1.115","get");
+  sv1.setHost("ESP","get");
  
 }
 json response;

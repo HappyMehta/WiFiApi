@@ -2,67 +2,106 @@
 #ifdef ESP32
 #include <WiFi.h>
 #include <AsyncTCP.h>
+#include <ESPmDNS.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESPAsyncTCP.h>
 #endif
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJSON.h>
+#define MAX_API 15
+json hostAdress;
 String api_server_ssid = "";
 String api_server_password = "";
 String PARAM_MESSAGE = "message";
 AsyncWebServer server(80);
-
+json (*dataRecieve[15])(json);
 IPAddress subnet(255, 255, 255, 0);
-int Connect(String ssid, String password, IPAddress local_IP, IPAddress gateway)
+bool isServer = false;
+
+void browseService(const char * service = "http", const char * proto = "tcp"){
+    Serial.printf("Browsing for service _%s._%s.local. ... ", service, proto);
+    int n = MDNS.queryService(service, proto);
+    if (n == 0) {
+        Serial.println("no services found");
+    } else {
+        Serial.print(n);
+        Serial.println(" service(s) found");
+        hostAdress.clear();
+        for (int i = 0; i < n; ++i) {
+            // Print details for each service found
+            
+        hostAdress.addUnit(MDNS.hostname(i), MDNS.IP(i).toString());
+        }
+    }
+    Serial.println();
+}
+
+int Connect(String ssid, String password, String hostName)
 {
     api_server_ssid = ssid;
     api_server_password = password;
-    if (!WiFi.config(local_IP, gateway, subnet))
-    {
-        Serial.println("STA Failed to configure");
-    }
     WiFi.mode(WIFI_STA);
     WiFi.begin(api_server_ssid.c_str(), api_server_password.c_str());
-    while (WiFi.waitForConnectResult() != WL_CONNECTED)
+    Serial.println("Connecting");
+    while (WiFi.status() != WL_CONNECTED)
         {
-            Serial.printf("WiFi Failed!\n");
-            WiFi.begin(api_server_ssid.c_str(), api_server_password.c_str());
-            return -1;
+            Serial.print(".");
+            delay(500);
         }
+    int cnt = 0;
+    String offset = "";
+    while (!MDNS.begin((hostName+offset).c_str())) {
+        Serial.println("Error setting up MDNS responder!");
+        delay(500);
+        offset = String(++cnt);
+        Serial.println("offset = "+offset);
+    }
+    Serial.println("Connected as "+ hostName+offset );
     return 1;
+
 }
 String getAddress()
 {
-    Serial.println(WiFi.localIP());
+    WiFi.localIP();
 }
-json (*dataRecieve)(json);
 
 json messageRecieved;
+int apiId = 0;
+json idUrlMapping;
 void registerApi(String name, json (*recieve)(json))
 {
+    idUrlMapping.addUnit("/"+name, apiId);
+    isServer = true;
     messageRecieved.clear();
     int cnt = 0;
-    dataRecieve = recieve;
+    dataRecieve[apiId] = recieve;
     server.on(("/" + name).c_str(), HTTP_GET, [](AsyncWebServerRequest *request) {
+        String urlId;
         if (request->hasParam(PARAM_MESSAGE))
         {
-
+            urlId=request->url();
+            //Serial.println("message recieved from"+url);
             String message = request->getParam(PARAM_MESSAGE)->value();
             messageRecieved = parseJSON(message);
         }
         else
-        {
+        {   
             messageRecieved.addUnit("error","Message Not Present");
         }
-        json response = dataRecieve(messageRecieved);
+        //Serial.println("Api Index= "+String(idUrlMapping.getNumberValue(urlId)));
+        json response = dataRecieve[idUrlMapping.getNumberValue(urlId)](messageRecieved);
         // Serial.println(response.getString());
         request->send(200, "text/plain", response.getString());
     });
+    apiId++;
 }
 void serverBegin()
 {
     server.begin();
+    if(isServer){
+        MDNS.addService("http", "tcp", 80);
+    }
 }
 class ServerReference
 {
@@ -79,9 +118,13 @@ class ServerReference
         {
             setHost(server_host,name);
         }
-        void setHost(String server_host,String name)
+        void setHost(String hostName,String name)
         {
-            host=server_host;
+            while(hostAdress.getValue(hostName) == ""){
+                browseService();
+            }
+            host=hostAdress.getValue(hostName);
+            //Serial.println(host);   
             apiName=name;
         }
         void setMessage(String msg)
@@ -90,8 +133,8 @@ class ServerReference
         }
         int connectHost()
         {
-            Serial.print("connecting to ");
-            Serial.println(host);
+            // Serial.print("connecting to ");
+            // Serial.println(host);
             const int httpPort = 80;
             unsigned long timeout = millis();
             while (!client.connect(host.c_str(), httpPort)) 
@@ -136,9 +179,12 @@ class ServerReference
             {
                 line += char(client.read());
             }
-            Serial.println(line);
+            //Serial.println(line);
             response = parseJSON(line);
             return response;  
         }
 
 };
+
+
+
